@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .main {
+        width: 80%;
+        margin: auto;
+        font-family: Roboto, Arial, sans-serif;
+      }
+
+      [data-action='add-new-task'] {
+        width: 100px;
+      }
+
+      .new-task {
+        display: flex;
+      }
+
+      #txtNewTask {
+        border: 1px solid #ccc;
+        padding: 10px;
+        width: 100%;
+      }
+
+      #task-list {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .completed .task-text {
+        text-decoration: line-through;
+      }
+
+      .pinned {
+        order: 1;
+      }
+
+      .task-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: 1px solid #ccc;
+        margin: 10px 0px;
+      }
+
+      .task-item:not(.pinned):not(.completed) {
+        order: 2;
+      }
+
+      .completed {
+        order: 3;
+      }
+
+      .completed [data-action='mark-task-as-done'],
+      .completed [data-action='pin-task'] {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="main">
+      <h3>Manage Tasks</h3>
+      <div class="new-task">
+        <input
+          type="text"
+          id="txtNewTask"
+          name="taskDesc"
+          placeholder="Write your new task here..."
+        />
+        <input type="submit" data-action="add-new-task" value="Add" />
+      </div>
+      <div id="task-list"></div>
+    </div>
+    <script>
+      const taskList = document.getElementById('task-list');
+      const newTaskEl = document.getElementById('txtNewTask');
+      newTaskEl.classList.add('focus');
+      newTaskEl.focus();
+      newTaskEl.addEventListener('keyup', (ev) => {
+        if (ev.key === 'Enter') {
+          addNewTask();
+        }
+      });
+      let currentTaskItem = null;
+      let focusElement = newTaskEl;
+      let index = -1;
+      document.body.addEventListener('keyup', (el) => {
+        if (el.key === 'ArrowDown') {
+          if (index < taskList.children.length - 1) {
+            index++;
+            taskList.children[index].focus();
+          }
+        } else if (el.key === 'ArrowUp') {
+          if (index > 0) {
+            index--;
+            taskList.children[index].focus();
+          } else {
+            newTaskEl.focus();
+          }
+        }
+      });
+      document.body.addEventListener('click', (el, ev) => {
+        const action = el.target.getAttribute('data-action');
+        currentTaskItem = el.target.closest('.task-item');
+        if (action === 'add-new-task') {
+          addNewTask();
+        } else if (action === 'delete-task') {
+          deleteTask();
+        } else if (action === 'pin-task') {
+          pinTask(el.target);
+        } else if (action === 'mark-task-as-done') {
+          markTaskAsDone();
+        }
+      });
+
+      function deleteTask() {
+        taskList.removeChild(currentTaskItem);
+      }
+      function pinTask(pinElement) {
+        currentTaskItem.classList.toggle('pinned');
+        pinElement.value = currentTaskItem.classList.contains('pinned')
+          ? 'Unpin'
+          : 'Pin';
+      }
+      function markTaskAsDone() {
+        currentTaskItem.style.order = '3';
+        currentTaskItem.classList.remove('pinned');
+        currentTaskItem.classList.add('completed');
+      }
+
+      function addNewTask() {
+        let newTaskDesc = (newTaskEl.value || '').trim();
+
+        if (!newTaskDesc) return;
+        newTaskEl.value = '';
+        const task = document.createElement('div');
+        task.className = 'task-item';
+        task.tabIndex = 0;
+        task.innerHTML = `
+                <div class="task-text">${newTaskDesc}</div>
+                <div>
+                <input type="button" tabIndex data-action="mark-task-as-done" value="Done">
+                <input type="button" tabIndex data-action="pin-task" value="Pin">
+                <input type="button" tabIndex data-action="delete-task" value="Delete">
+                </div>
+                `;
+        taskList.appendChild(task);
+      }
+    </script>
+  </body>
+</html>
